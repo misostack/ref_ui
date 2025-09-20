@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { GoalTrackerStorage } from "../services/storage";
 import { Goal, GoalTrackingLog } from "../types";
 import IconDisplay from "../components/icon-display";
+import EditGoalModal from "../components/edit-goal-modal";
 
 export default function GoalDetails() {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +18,7 @@ export default function GoalDetails() {
   const [timeFilter, setTimeFilter] = useState<"week" | "month" | "30days">(
     "week"
   );
-  const [, setShowEditModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -317,6 +318,21 @@ export default function GoalDetails() {
           </div>
         )}
       </div>
+
+      {/* Edit Goal Modal */}
+      <EditGoalModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        goal={goal}
+        onSave={(updatedGoal) => {
+          setGoal(updatedGoal);
+          // Refresh the logs to get updated data
+          if (goal) {
+            const updatedLogs = GoalTrackerStorage.getLogsForGoal(goal.id);
+            setLogs(updatedLogs);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { GoalTrackerStorage } from "../services/storage";
 import { Goal, UserSettings, APP_COLORS } from "../types";
 import IconDisplay from "../components/icon-display";
+import EditGoalModal from "../components/edit-goal-modal";
 
 export default function GoalTrackerHome() {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ export default function GoalTrackerHome() {
   const [userName, setUserName] = useState("");
   const [textColor, setTextColor] = useState("#000000");
   const [secondaryTextColor, setSecondaryTextColor] = useState("#374151");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
 
   useEffect(() => {
     const loadedGoals = GoalTrackerStorage.getGoals();
@@ -124,41 +127,58 @@ export default function GoalTrackerHome() {
           const status = getCheckInStatus(goal);
 
           return (
-            <button
+            <div
               key={goal.id}
-              onClick={() => navigate(`/goal-tracker/goal/${goal.id}`)}
               className="relative p-4 rounded-2xl text-left transition-transform hover:scale-105 active:scale-95"
               style={{ backgroundColor: goal.color }}
             >
-              {/* Icon */}
-              <IconDisplay icon={goal.icon} size="md" className="mb-2" />
+              {/* Edit Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedGoal(goal);
+                  setShowEditModal(true);
+                }}
+                className="absolute top-2 right-2 p-1 rounded-full bg-black/20 hover:bg-black/30 transition-colors"
+              >
+                <span className="text-white text-sm">✏️</span>
+              </button>
 
-              {/* Goal Name */}
-              <h3 className="font-semibold text-black text-sm mb-2 line-clamp-2">
-                {goal.name}
-              </h3>
+              {/* Goal Card Content */}
+              <button
+                onClick={() => navigate(`/goal-tracker/goal/${goal.id}`)}
+                className="w-full text-left"
+              >
+                {/* Icon */}
+                <IconDisplay icon={goal.icon} size="md" className="mb-2" />
 
-              {/* Progress */}
-              <div className="text-xs text-gray-700 mb-2">
-                {totalProgress}/{goal.target} {goal.unit.pluralName}
-              </div>
+                {/* Goal Name */}
+                <h3 className="font-semibold text-black text-sm mb-2 line-clamp-2">
+                  {goal.name}
+                </h3>
 
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div
-                  className="bg-white rounded-full h-2 transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+                {/* Progress */}
+                <div className="text-xs text-gray-700 mb-2">
+                  {totalProgress}/{goal.target} {goal.unit.pluralName}
+                </div>
 
-              {/* Check-in Status */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-600">
-                  {progress.toFixed(0)}%
-                </span>
-                <span className="text-lg">{getStatusIcon(status)}</span>
-              </div>
-            </button>
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-white rounded-full h-2 transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+
+                {/* Check-in Status */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">
+                    {progress.toFixed(0)}%
+                  </span>
+                  <span className="text-lg">{getStatusIcon(status)}</span>
+                </div>
+              </button>
+            </div>
           );
         })}
 
@@ -273,6 +293,23 @@ export default function GoalTrackerHome() {
           </div>
         </div>
       )}
+
+      {/* Edit Goal Modal */}
+      <EditGoalModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedGoal(null);
+        }}
+        goal={selectedGoal}
+        onSave={(updatedGoal) => {
+          // Update the goals list
+          const updatedGoals = goals.map((g) =>
+            g.id === updatedGoal.id ? updatedGoal : g
+          );
+          setGoals(updatedGoals);
+        }}
+      />
     </div>
   );
 }
